@@ -1,4 +1,4 @@
-# 🏡 Homelab – K3s Cluster
+# 🏡 Homelab
 
 Welcome to my personal homelab, fully managed via GitOps.
 This repository contains the complete configuration of my multi-node K3s cluster, maintained using FluxCD.
