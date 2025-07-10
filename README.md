@@ -37,6 +37,4 @@ clusters/
   homelab/
     apps/                  # Workloads: komga, actualBudget, etc.
     flux-system/           # Flux bootstrap manifests
-    networking/            # Ingress setup (nginx)
-    storage/               # Longhorn
 ````
