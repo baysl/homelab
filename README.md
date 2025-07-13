@@ -37,4 +37,6 @@ clusters/
   homelab/
     apps/                  # Workloads: komga, actualBudget, etc.
     flux-system/           # Flux bootstrap manifests
+    networking/            # nginx manifests
+    storage/               # Longhorn manifests
 ````
