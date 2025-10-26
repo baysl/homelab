@@ -36,7 +36,7 @@ jobs:
       - name: Switch Flux to PR branch
         if: github.event.action != 'closed'
         run: |
-          flux patch source gitrepository flux-system \
+          kubectl patch source gitrepository flux-system \
             --namespace flux-system \
             --type merge \
             --patch "{\"spec\": {\"ref\": {\"branch\": \"${{ github.head_ref }}\"}}}"
@@ -47,7 +47,7 @@ jobs:
       - name: Restore Flux to main
         if: github.event.action == 'closed'
         run: |
-          flux patch source gitrepository flux-system \
+          kubectl patch source gitrepository flux-system \
             --namespace flux-system \
             --type merge \
             --patch '{"spec": {"ref": {"branch": "main"}}}'
