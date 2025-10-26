@@ -8,11 +8,10 @@ on:
 
 jobs:
   flux-preview:
-    # Skip draft PRs
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     env:
-    KUBECONFIG: ${{ github.workspace }}/kubeconfig  # 👈 applies to all steps
+      KUBECONFIG: ${{ github.workspace }}/kubeconfig
 
     steps:
       - name: Checkout repo
@@ -27,31 +26,28 @@ jobs:
         with:
           version: 'latest'
 
-      - name: Load kubeconfig from secret
+      - name: Write kubeconfig
         env:
           KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG_CONTENT }}
-        run: |
-          echo "$KUBECONFIG_CONTENT" > kubeconfig
-          export KUBECONFIG=$PWD/kubeconfig
+        run: echo "$KUBECONFIG_CONTENT" > $KUBECONFIG
 
-      # --- Handle PR open/update ---
+      - name: Test connection
+        run: kubectl get nodes
+
       - name: Switch Flux to PR branch
         if: github.event.action != 'closed'
+        env:
+          PR_BRANCH: ${{ github.head_ref }}
         run: |
-          kubectl patch source gitrepository flux-system \
-            --namespace flux-system \
-            --type merge \
-            --patch "{\"spec\": {\"ref\": {\"branch\": \"${{ github.head_ref }}\"}}}"
-          flux reconcile source gitrepository flux-system --namespace flux-system
-          flux reconcile kustomization flux-system --namespace flux-system
+          kubectl patch gitrepository flux-system -n flux-system --type merge \
+            -p "{\"spec\": {\"ref\": {\"branch\": \"${PR_BRANCH}\"}}}"
+          flux reconcile source gitrepository flux-system -n flux-system
+          flux reconcile kustomization flux-system -n flux-system
 
-      # --- Handle PR close/merge ---
       - name: Restore Flux to main
         if: github.event.action == 'closed'
         run: |
-          kubectl patch source gitrepository flux-system \
-            --namespace flux-system \
-            --type merge \
-            --patch '{"spec": {"ref": {"branch": "main"}}}'
-          flux reconcile source gitrepository flux-system --namespace flux-system
-          flux reconcile kustomization flux-system --namespace flux-system
+          kubectl patch gitrepository flux-system -n flux-system --type merge \
+            -p '{"spec": {"ref": {"branch": "main"}}}'
+          flux reconcile source gitrepository flux-system -n flux-system
+          flux reconcile kustomization flux-system -n flux-system
