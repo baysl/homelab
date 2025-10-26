@@ -24,4 +24,4 @@ spec:
   interval: 5m
   valuesFrom:
     - kind: Secret
-      name: credentials
+      name: tailscale-auth
