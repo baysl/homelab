@@ -4,3 +4,5 @@ resources:
   - namespace.yaml
   - rbac.yaml
   - secret.yaml
+  - helmrelease.yaml
+  - credentials.yaml
