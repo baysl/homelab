@@ -14,8 +14,7 @@ I'm constantly learning and improving this setup.
 - **CNI**: [Flannel](https://github.com/flannel-io/flannel)
 - **Ingress Controller**: [NGINX Ingress](https://kubernetes.github.io/ingress-nginx/)
 - **Storage**: [Longhorn](https://longhorn.io) (with replication and snapshots)
-- **DNS**: Static entries in `/etc/hosts` (for now)
-- **Remote access**: [Tailscale](https://tailscale.com)
+- **Remote access**: [Tailscale](https://tailscale.com/learn/managing-access-to-kubernetes-with-tailscale#deploy-tailscale-in-your-kubernetes-cluster)
 
 ---
 
@@ -23,8 +22,8 @@ I'm constantly learning and improving this setup.
 
 | Application     | Domain            | Notes                                 |
 |-----------------|-------------------|---------------------------------------|
-| Komga           | `komga.lab`       | Comic server, persistent with Longhorn volumes |
 | Longhorn UI     | `longhorn.lab`    | Storage dashboard                     |
+| Komga           | `komga.lab`       | Comic server, persistent with Longhorn volumes |
 | Actual Budget   | `actual.lab`      | Self-hosted budgeting tool *(WIP)*    |
 | Prometheus      | `prom.lab`        | Metrics and cluster monitoring *(planned)* |
 | Grafana         | `grafana.lab`     | Dashboards *(planned)*                |
