@@ -11,6 +11,8 @@ jobs:
     # Skip draft PRs
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+    env:
+    KUBECONFIG: ${{ github.workspace }}/kubeconfig  # 👈 applies to all steps
 
     steps:
       - name: Checkout repo
