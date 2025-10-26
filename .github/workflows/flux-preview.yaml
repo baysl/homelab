@@ -12,6 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # TODO: tailscale connection
+
       - name: Setup kubeconfig
         run: |
           mkdir -p ~/.kube
