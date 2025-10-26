@@ -1,0 +1,55 @@
+name: Flux Preview Deploy
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - main
+
+jobs:
+  flux-preview:
+    # Skip draft PRs
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install Flux CLI
+        run: |
+          curl -s https://fluxcd.io/install.sh | sudo bash
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
+
+      - name: Load kubeconfig from secret
+        env:
+          KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG_CONTENT }}
+        run: |
+          echo "$KUBECONFIG_CONTENT" > kubeconfig
+          export KUBECONFIG=$PWD/kubeconfig
+
+      # --- Handle PR open/update ---
+      - name: Switch Flux to PR branch
+        if: github.event.action != 'closed'
+        run: |
+          flux patch source gitrepository flux-system \
+            --namespace flux-system \
+            --type merge \
+            --patch "{\"spec\": {\"ref\": {\"branch\": \"${{ github.head_ref }}\"}}}"
+          flux reconcile source gitrepository flux-system --namespace flux-system
+          flux reconcile kustomization flux-system --namespace flux-system
+
+      # --- Handle PR close/merge ---
+      - name: Restore Flux to main
+        if: github.event.action == 'closed'
+        run: |
+          flux patch source gitrepository flux-system \
+            --namespace flux-system \
+            --type merge \
+            --patch '{"spec": {"ref": {"branch": "main"}}}'
+          flux reconcile source gitrepository flux-system --namespace flux-system
+          flux reconcile kustomization flux-system --namespace flux-system
