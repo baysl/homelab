@@ -19,31 +19,29 @@ jobs:
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
 
-      - name: Setup kubectl
-        uses: azure/setup-kubectl@v4
-
       - name: Setup kubeconfig
         run: |
           mkdir -p ~/.kube
-          cat <<EOF > ~/.kube/config
-      apiVersion: v1
-      kind: Config
-      clusters:
-      - cluster:
-          server: ${{ secrets.K8S_SERVER }}
-          insecure-skip-tls-verify: true
-        name: homelab
-      contexts:
-      - context:
-          cluster: homelab
-          user: flux-preview
-        name: homelab
-      current-context: homelab
-      users:
-      - name: flux-preview
-        user:
-          token: ${{ secrets.K8S_TOKEN }}
-      EOF
+          echo "${{ secrets.K8S_TOKEN }}" > ~/.kube/token
+          cat > ~/.kube/config <<'EOF'
+apiVersion: v1
+kind: Config
+clusters:
+- cluster:
+    server: ${K8S_SERVER}
+    insecure-skip-tls-verify: true
+  name: homelab
+contexts:
+- context:
+    cluster: homelab
+    user: flux-preview
+  name: homelab
+current-context: homelab
+users:
+- name: flux-preview
+  user:
+    token: ${K8S_TOKEN}
+EOF
 
       - name: Test cluster connectivity
         run: |
