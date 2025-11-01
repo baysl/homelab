@@ -1,4 +1,5 @@
 name: Flux Preview
+
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
@@ -6,21 +7,81 @@ on:
     types: [closed]
 
 jobs:
-  deploy-preview:
+  flux-preview:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
-      # TODO: tailscale connection
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
 
       - name: Setup kubeconfig
         run: |
           mkdir -p ~/.kube
-          echo "${KUBECONFIG_DATA}" | base64 --decode > ~/.kube/config
-          chmod 600 ~/.kube/config
-        env:
-          KUBECONFIG_DATA: ${{ secrets.KUBECONFIG_DATA }}
+          cat <<EOF > ~/.kube/config
+          apiVersion: v1
+          kind: Config
+          clusters:
+          - cluster:
+              server: ${{ secrets.K8S_SERVER }}
+              insecure-skip-tls-verify: true
+            name: homelab
+          contexts:
+          - context:
+              cluster: homelab
+              user: flux-preview
+            name: homelab
+          current-context: homelab
+          users:
+          - name: flux-preview
+            user:
+              token: ${{ secrets.K8S_TOKEN }}
+          EOF
 
-      - name: Verify cluster access
-        run: kubectl get nodes
+      - name: Patch Flux to use PR branch
+        run: |
+          kubectl patch gitrepository flux-system -n flux-system \
+            --type merge \
+            -p "{\"spec\":{\"ref\":{\"branch\":\"${{ github.head_ref }}\"}}}"
+
+  flux-reset:
+    if: github.event.pull_request.state == 'closed'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: tailscale/github-action@v2
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+
+      - name: Setup kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          cat <<EOF > ~/.kube/config
+          apiVersion: v1
+          kind: Config
+          clusters:
+          - cluster:
+              server: ${{ secrets.K8S_SERVER }}
+              insecure-skip-tls-verify: true
+            name: homelab
+          contexts:
+          - context:
+              cluster: homelab
+              user: flux-preview
+            name: homelab
+          current-context: homelab
+          users:
+          - name: flux-preview
+            user:
+              token: ${{ secrets.K8S_TOKEN }}
+          EOF
+
+      - name: Reset Flux to main
+        run: |
+          kubectl patch gitrepository flux-system -n flux-system \
+            --type merge \
+            -p '{"spec":{"ref":{"branch":"main"}}}'
