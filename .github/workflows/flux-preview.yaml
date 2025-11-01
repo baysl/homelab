@@ -20,10 +20,10 @@ jobs:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
 
       - name: Setup kubeconfig
+        shell: bash
         run: |
           mkdir -p ~/.kube
-          echo "${{ secrets.K8S_TOKEN }}" > ~/.kube/token
-          cat > ~/.kube/config <<'EOF'
+          tee ~/.kube/config >/dev/null <<'EOKUBE'
 apiVersion: v1
 kind: Config
 clusters:
@@ -41,7 +41,8 @@ users:
 - name: flux-preview
   user:
     token: ${K8S_TOKEN}
-EOF
+EOKUBE
+
 
       - name: Test cluster connectivity
         run: |
