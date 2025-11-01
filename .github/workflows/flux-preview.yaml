@@ -1,0 +1,103 @@
+name: Flux Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  pull_request_target:
+    types: [closed]
+
+jobs:
+  flux-preview:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+
+      - name: Setup kubeconfig
+        shell: bash
+        run: |
+          mkdir -p ~/.kube
+          tee ~/.kube/config >/dev/null <<'EOKUBE'
+apiVersion: v1
+kind: Config
+clusters:
+- cluster:
+    server: ${K8S_SERVER}
+    insecure-skip-tls-verify: true
+  name: homelab
+contexts:
+- context:
+    cluster: homelab
+    user: flux-preview
+  name: homelab
+current-context: homelab
+users:
+- name: flux-preview
+  user:
+    token: ${K8S_TOKEN}
+EOKUBE
+
+
+      - name: Test cluster connectivity
+        run: |
+          echo "Testing cluster connection..."
+          kubectl get ns
+
+      - name: Patch Flux to use PR branch
+        run: |
+          kubectl get gitrepositories -n flux-system
+          echo "Patching GitRepository to PR branch..."
+          kubectl patch gitrepository flux-system -n flux-system \
+            --type merge \
+            -p "{\"spec\":{\"ref\":{\"branch\":\"${{ github.head_ref }}\"}}}" \
+            --request-timeout=30s
+
+  flux-reset:
+    if: github.event.pull_request.state == 'closed'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: tailscale/github-action@v2
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Setup kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          cat <<EOF > ~/.kube/config
+          apiVersion: v1
+          kind: Config
+          clusters:
+          - cluster:
+              server: ${{ secrets.K8S_SERVER }}
+              insecure-skip-tls-verify: true
+            name: homelab
+          contexts:
+          - context:
+              cluster: homelab
+              user: flux-preview
+            name: homelab
+          current-context: homelab
+          users:
+          - name: flux-preview
+            user:
+              token: ${{ secrets.K8S_TOKEN }}
+          EOF
+
+      - name: Reset Flux to main
+        run: |
+          kubectl get gitrepositories -n flux-system
+          echo "Resetting GitRepository to main branch..."
+          kubectl patch gitrepository flux-system -n flux-system \
+            --type merge \
+            -p '{"spec":{"ref":{"branch":"main"}}}' \
+            --request-timeout=30s
