@@ -19,6 +19,11 @@ jobs:
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
 
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: '1.27.6'
+
       - name: Setup kubeconfig
         run: |
           mkdir -p ~/.kube
@@ -42,11 +47,25 @@ jobs:
               token: ${{ secrets.K8S_TOKEN }}
           EOF
 
+      - name: Test cluster connectivity
+        run: |
+          echo "Testing cluster connection..."
+          kubectl get ns
+          kubectl get crd gitrepositories.source.toolkit.fluxcd.io || exit 1
+
+      - name: Wait for Flux CRD
+        run: |
+          echo "Waiting for GitRepository CRD..."
+          kubectl wait --for=condition=Established crd/gitrepositories.source.toolkit.fluxcd.io --timeout=30s
+
       - name: Patch Flux to use PR branch
         run: |
+          kubectl get gitrepositories -n flux-system
+          echo "Patching GitRepository to PR branch..."
           kubectl patch gitrepository flux-system -n flux-system \
             --type merge \
-            -p "{\"spec\":{\"ref\":{\"branch\":\"${{ github.head_ref }}\"}}}"
+            -p "{\"spec\":{\"ref\":{\"branch\":\"${{ github.head_ref }}\"}}}" \
+            --request-timeout=30s
 
   flux-reset:
     if: github.event.pull_request.state == 'closed'
@@ -57,6 +76,11 @@ jobs:
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
 
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: '1.27.6'
+
       - name: Setup kubeconfig
         run: |
           mkdir -p ~/.kube
@@ -80,8 +104,17 @@ jobs:
               token: ${{ secrets.K8S_TOKEN }}
           EOF
 
+      - name: Test cluster connectivity
+        run: |
+          echo "Testing cluster connection..."
+          kubectl get ns
+          kubectl get crd gitrepositories.source.toolkit.fluxcd.io || exit 1
+
       - name: Reset Flux to main
         run: |
+          kubectl get gitrepositories -n flux-system
+          echo "Resetting GitRepository to main branch..."
           kubectl patch gitrepository flux-system -n flux-system \
             --type merge \
-            -p '{"spec":{"ref":{"branch":"main"}}}'
+            -p '{"spec":{"ref":{"branch":"main"}}}' \
+            --request-timeout=30s
