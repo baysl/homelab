@@ -26,24 +26,24 @@ jobs:
         run: |
           mkdir -p ~/.kube
           cat <<EOF > ~/.kube/config
-          apiVersion: v1
-          kind: Config
-          clusters:
-          - cluster:
-              server: ${{ secrets.K8S_SERVER }}
-              insecure-skip-tls-verify: true
-            name: homelab
-          contexts:
-          - context:
-              cluster: homelab
-              user: flux-preview
-            name: homelab
-          current-context: homelab
-          users:
-          - name: flux-preview
-            user:
-              token: ${{ secrets.K8S_TOKEN }}
-          EOF
+        apiVersion: v1
+        kind: Config
+        clusters:
+        - cluster:
+            server: ${{ secrets.K8S_SERVER }}
+            insecure-skip-tls-verify: true
+          name: homelab
+        contexts:
+        - context:
+            cluster: homelab
+            user: flux-preview
+          name: homelab
+        current-context: homelab
+        users:
+        - name: flux-preview
+          user:
+            token: ${{ secrets.K8S_TOKEN }}
+        EOF
 
       - name: Test cluster connectivity
         run: |
