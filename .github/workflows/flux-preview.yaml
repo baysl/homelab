@@ -18,8 +18,6 @@ jobs:
         uses: tailscale/github-action@v2
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-          login-server: "https://login.tailscale.com" # optional
-          hostname: "gh-runner-${{ github.run_id }}"
 
       - name: Setup kubectl
         uses: azure/setup-kubectl@v4
@@ -47,23 +45,10 @@ jobs:
               token: ${{ secrets.K8S_TOKEN }}
           EOF
 
-      # - name: Test cluster connectivity
-      #   run: |
-      #     echo "Testing cluster connection..."
-      #     kubectl get ns
-      #     kubectl get crd gitrepositories.source.toolkit.fluxcd.io || exit 1
-
       - name: Test cluster connectivity
         run: |
-          echo "Check Tailscale IP"
-          tailscale status
-          echo "Check API reachability"
-          curl -vk ${{ secrets.K8S_SERVER }}/version || exit 1
-
-      - name: Wait for Flux CRD
-        run: |
-          echo "Waiting for GitRepository CRD..."
-          kubectl wait --for=condition=Established crd/gitrepositories.source.toolkit.fluxcd.io --timeout=30s
+          echo "Testing cluster connection..."
+          kubectl get ns
 
       - name: Patch Flux to use PR branch
         run: |
@@ -108,12 +93,6 @@ jobs:
             user:
               token: ${{ secrets.K8S_TOKEN }}
           EOF
-
-      - name: Test cluster connectivity
-        run: |
-          echo "Testing cluster connection..."
-          kubectl get ns
-          kubectl get crd gitrepositories.source.toolkit.fluxcd.io || exit 1
 
       - name: Reset Flux to main
         run: |
