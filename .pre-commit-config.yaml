@@ -1,0 +1,21 @@
+repos:
+  # YAML linter
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+    - id: end-of-file-fixer
+    - id: trailing-whitespace
+    - id: check-yaml
+      args: ['--allow-multiple-documents']
+  # Checks for secrets, tokens, API keys (even inside Kubernetes manifests)
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.2
+    hooks:
+      - id: gitleaks
+  # Reject any YAML in secrets/ that does not contain "sops:" AND "ENC[".
+  - repo: local
+    hooks:
+      - id: prevent-unencrypted-secrets
+        name: Prevent unencrypted secrets
+        entry: secrets/pre-commit.sh
+        language: script
