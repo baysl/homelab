@@ -7,7 +7,7 @@ Secrets here must always be committed encrypted. Flux decrypts them during recon
 - `sops` installed
 - `age` installed
 - A valid `agekey` private key stored in the cluster (see below)
-- A valid `creation_rules` section in a `.sops.age` file at repo root (so SOPS knows how to encrypt)
+- A valid `creation_rules` section in a `.sops.yaml` file at repo root (so SOPS knows how to encrypt)
 
 ## How to use
 1. Generate an `agekey` file if not already done:
