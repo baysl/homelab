@@ -5,7 +5,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 1m
-  path: "./clusters/homelab/infra"
+  path: "./clusters/infra"
   prune: true
   sourceRef:
     kind: GitRepository
