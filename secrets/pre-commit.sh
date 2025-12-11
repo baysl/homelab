@@ -9,7 +9,7 @@ for file in $(git diff --cached --name-only | grep '^secrets/' | sort -u || true
   if [[ ! -f "$file" ]]; then
     continue
   fi
-  if [[ "$file" =~ \.ya?ml$ ]]; then
+  if [[ "$file" =~ \.ya?ml$ ]] && [[ "$file" != "secrets/kustomization.yaml" ]]; then
     if ! grep -q 'sops:' "$file"; then
       echo "Unencrypted secret detected in $file"
       failed=1
