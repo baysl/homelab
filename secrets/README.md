@@ -43,7 +43,7 @@ Secrets here must always be committed encrypted. Flux decrypts them during recon
       secretRef:
          name: sops-age
     ```
-    Check [`clusters/homelab/flux-system/sets-kustomization.yaml`](https://github.com/bae/homelab/blob/main/clusters/homelab/flux-system/sets-kustomization.yaml) to see how this is implemented in this repository.
+    Check [`clusters/homelab/flux-system/sets-kustomization.yaml`](https://github.com/baysl/homelab/blob/main/clusters/homelab/flux-system/secrets-kustomization.yaml) to see how this is implemented in this repository.
 
 
 Now, when Flux reconciles the Kustomization that includes the secrets, it will use the provided SOPS decryption secret to decrypt them automatically.
