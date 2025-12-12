@@ -1,0 +1,49 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: actualbudget
+  namespace: actualbudget
+  labels:
+    app: actualbudget
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: actualbudget
+  template:
+    metadata:
+      labels:
+        app: actualbudget
+    spec:
+      containers:
+      - name: actualbudget
+        image: actualbudget/actual-server:25.12.0
+        ports:
+        - containerPort: 5006
+          name: http
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5006
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 6
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        env:
+        - name: TZ
+          value: "UTC"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: actualbudget-data

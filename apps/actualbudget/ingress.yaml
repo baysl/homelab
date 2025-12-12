@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: actualbudget
+  namespace: actualbudget
+  annotations:
+    tailscale.com/hostname: "actualbudget"
+spec:
+  ingressClassName: tailscale
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: actualbudget
+            port:
+              number: 5006
