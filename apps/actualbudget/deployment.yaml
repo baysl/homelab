@@ -58,6 +58,9 @@ kind: Service
 metadata:
   name: actualbudget
   namespace: actualbudget
+  annotations:
+    tailscale.com/expose: "true"
+    tailscale.com/hostname: "actualbudget"
 spec:
   selector:
     app: actualbudget
@@ -66,4 +69,4 @@ spec:
     targetPort: 5006
     protocol: TCP
     name: http
-  type: ClusterIP
+  type: LoadBalancer

@@ -7,10 +7,9 @@ This directory contains the Kubernetes manifests for deploying [ActualBudget](ht
 ActualBudget is a local-first personal finance tool. This deployment includes:
 
 - **Namespace**: `actualbudget` - Isolated namespace for the application
-- **Deployment**: Runs the ActualBudget server (actualbudget/actual-server:latest)
+- **Deployment**: Runs the ActualBudget server (actualbudget/actual-server:25.12.0)
 - **PersistentVolumeClaim**: 1Gi storage backed by Longhorn for persistent data
-- **Service**: ClusterIP service exposing port 5006
-- **Tailscale Ingress**: Exposes the service via Tailscale with hostname `actualbudget`
+- **Service**: LoadBalancer service with Tailscale annotations exposing port 5006
 
 ## Access
 
@@ -20,7 +19,7 @@ Once deployed, ActualBudget will be accessible via Tailscale at:
 https://actualbudget.<your-tailnet>.ts.net
 ```
 
-The Tailscale operator will automatically create a device in your Tailscale network with HTTPS enabled.
+The Tailscale operator will automatically create a LoadBalancer service with the hostname `actualbudget` in your Tailscale network with HTTPS enabled.
 
 ## Configuration
 
@@ -44,9 +43,13 @@ The deployment uses `actualbudget/actual-server:25.12.0`. To update to a newer v
 2. Update the image tag in `deployment.yaml`
 3. Commit and push the change - FluxCD will automatically deploy the new version
 
-### Tailscale Ingress
+### Tailscale Exposure
 
-The Tailscale Ingress uses the `v1alpha1` API version. While this is an alpha API, it's the current stable version provided by the Tailscale operator. Monitor Tailscale operator releases for potential API version updates.
+The Service uses Tailscale annotations to expose ActualBudget securely:
+- `tailscale.com/expose: "true"` - Enables Tailscale exposure
+- `tailscale.com/hostname: "actualbudget"` - Sets the hostname in your Tailnet
+
+The service type is set to `LoadBalancer`, which allows the Tailscale operator to provision the external access.
 
 ## Deployment
 
@@ -60,7 +63,7 @@ To manually verify the deployment status:
 
 ```bash
 kubectl get all -n actualbudget
-kubectl get ingress -n actualbudget
+kubectl get svc -n actualbudget
 ```
 
 ## Troubleshooting
@@ -71,9 +74,10 @@ kubectl get pods -n actualbudget
 kubectl logs -n actualbudget -l app=actualbudget
 ```
 
-Check Tailscale Ingress status:
+Check Service and Tailscale status:
 ```bash
-kubectl describe ingress -n actualbudget actualbudget
+kubectl describe svc actualbudget -n actualbudget
+kubectl logs -n tailscale -l app=tailscale-operator
 ```
 
 Check PVC status:
