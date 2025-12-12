@@ -1,17 +1,4 @@
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: actualbudget-data
-  namespace: actualbudget
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: longhorn
-  resources:
-    requests:
-      storage: 1Gi
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -35,6 +22,14 @@ spec:
         ports:
         - containerPort: 5006
           name: http
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5006
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 6
         volumeMounts:
         - name: data
           mountPath: /data
@@ -52,21 +47,3 @@ spec:
       - name: data
         persistentVolumeClaim:
           claimName: actualbudget-data
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: actualbudget
-  namespace: actualbudget
-  annotations:
-    tailscale.com/expose: "true"
-    tailscale.com/hostname: "actualbudget"
-spec:
-  selector:
-    app: actualbudget
-  ports:
-  - port: 5006
-    targetPort: 5006
-    protocol: TCP
-    name: http
-  type: LoadBalancer
