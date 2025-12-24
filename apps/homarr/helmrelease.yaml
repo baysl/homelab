@@ -1,0 +1,80 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: homarr
+  namespace: flux-system
+spec:
+  url: https://homarr-labs.github.io/charts/
+  interval: 1h
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: homarr
+  namespace: homarr
+spec:
+  interval: 10m
+  chart:
+    spec:
+      chart: homarr
+      version: "*"
+      sourceRef:
+        kind: HelmRepository
+        name: homarr
+        namespace: flux-system
+      interval: 10m
+  driftDetection:
+    mode: enabled
+    ignore:
+    - paths: ["/spec/replicas"]
+      target:
+        kind: Deployment
+  values:
+    # Use short name for Tailscale hostname
+    fullnameOverride: "homarr"
+    
+    env:
+      TZ: "Europe/Zurich"
+      LOG_LEVEL: "info"
+    # Override container ports to match Homarr's default (3000)
+    containerPorts:
+      http:
+        port: 3000
+        protocol: TCP
+    # Update service to use port 3000
+    service:
+      enabled: true
+      ports:
+        app:
+          port: 3000
+          protocol: TCP
+          targetPort: http
+    # Update readiness probe to use port 3000
+    readinessProbe:
+      httpGet:
+        path: /api/health/ready
+        port: 3000
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      failureThreshold: 3
+    envSecrets:
+      dbEncryption:
+        existingSecret: "db-encryption"
+        key: "db-encryption-key"
+    persistence:
+      homarrDatabase:
+        enabled: true
+        size: "1Gi"
+        accessMode: ReadWriteOnce
+        storageClassName: "longhorn"
+        mountPath: "/appdata"
+    ingress:
+      enabled: true
+      ingressClassName: "tailscale"
+      annotations:
+        tailscale.com/hostname: "homarr"
+      hosts:
+        - paths:
+            - path: /
+              pathType: Prefix
