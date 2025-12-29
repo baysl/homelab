@@ -31,9 +31,6 @@ spec:
       target:
         kind: Deployment
   values:
-    # Use short name for Tailscale hostname
-    fullnameOverride: "homarr"
-    
     env:
       TZ: "Europe/Zurich"
       LOG_LEVEL: "info"
