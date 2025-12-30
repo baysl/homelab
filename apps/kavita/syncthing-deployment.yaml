@@ -1,30 +1,37 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kavita
+  name: kavita-syncthing
   namespace: kavita
   labels:
-    app: kavita
+    app: kavita-syncthing
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: kavita
+      app: kavita-syncthing
   template:
     metadata:
       labels:
-        app: kavita
+        app: kavita-syncthing
     spec:
       securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
       containers:
-      - name: kavita
-        image: lscr.io/linuxserver/kavita@sha256:4f71b834ff93131e864a7a3c3a6cfa5e781ca4fd2c094c1b0f95d34a4df66b69
+      - name: syncthing
+        image: syncthing/syncthing:1.27.10
         imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 5000
-          name: http
+        - containerPort: 8384
+          name: gui
+        - containerPort: 22000
+          name: sync
+        - containerPort: 22000
+          name: sync-udp
+          protocol: UDP
         env:
         - name: PUID
           value: "1000"
@@ -34,34 +41,20 @@ spec:
           value: "UTC"
         volumeMounts:
         - name: config
-          mountPath: /config
+          mountPath: /var/syncthing/config
         - name: library
           mountPath: /data
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 5000
-          initialDelaySeconds: 15
-          periodSeconds: 10
-          failureThreshold: 6
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 5000
-          initialDelaySeconds: 30
-          periodSeconds: 20
-          failureThreshold: 6
         resources:
           requests:
             cpu: "100m"
             memory: "256Mi"
           limits:
-            cpu: "1000m"
-            memory: "1Gi"
+            cpu: "500m"
+            memory: "512Mi"
       volumes:
       - name: config
         persistentVolumeClaim:
-          claimName: kavita-config
+          claimName: kavita-syncthing-config
       - name: library
         persistentVolumeClaim:
           claimName: kavita-library

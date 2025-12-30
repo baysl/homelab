@@ -23,3 +23,16 @@ spec:
   resources:
     requests:
       storage: 50Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kavita-syncthing-config
+  namespace: kavita
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 1Gi

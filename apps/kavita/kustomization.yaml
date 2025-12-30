@@ -6,3 +6,5 @@ resources:
 - svc.yaml
 - ingress.yaml
 - storage.yaml
+- syncthing-deployment.yaml
+- syncthing-svc.yaml
